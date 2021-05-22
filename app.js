@@ -1,117 +1,107 @@
 const express = require('express');
 const axios = require('axios')
-
+const cors=require('cors');
 const app = express();
+app.use(cors())
 app.use(express.json());
-  app.get("/", (req, res) => {
-    res.send("Api is running");
-    console.log(
-        `hii`
-      )
-  });
- //const headers={'x-api-key': 'castrkey_91e6aa00-a7e3-11eb-bc86-0b87cf87c323'}
-  const castrBaseUrl = 'https://developers.castr.io/apiv1';
-  
-  
-getRegionList = async(streamType) =>{
+var router = express.Router();
+
+const castrBaseUrl = 'https://developers.castr.io/apiv1';
+app.get('/test',async function ( req, res) {
+ res.json({"resulkt":"okk"})
+
+})
+app.post('/checkCasterApiKey', async function ( req, res) {
     try{
-        
-        let result= await axios.get(`${castrBaseUrl}/ingests/${streamType}`, {headers});
-        console.log("List of Regions",result)
-        return result
-
+      const headers={'x-api-key': req.body.apiKey}
+        let result= await axios.get(`${castrBaseUrl}/user/profile`,{headers});
+        console.log("API key",result)
+       res.send(result.data);
     } catch (error) {
-       console.log("errors",error);
-    }     
-    
-} 
-const streamtype="live"
-//getRegionList(streamtype)
-
-createNewStream = async(streamName, streamTypeValue, selectedRegion) => {
-    try{
-        const payload={
-            "type": streamTypeValue ,
-            "name": streamName,
-            "region":selectedRegion
-            }
-
-        let result= await axios.post(`${castrBaseUrl}/streams/create`, payload, {headers});
-        console.log("New stream created",result)
-        return result
-        
-
-    } catch (error) {
-       console.log("errors",error);
+      console.log("errors",error);
+      res.send(error)  
     }  
-}
-const streamName ="node tes";
-const streamTypeValue="live";
-const selectedRegion='5bc02ca183c5d1f2016d6d4e';
-//createNewStream(streamName, streamTypeValue, selectedRegion)
-
-getStreamRtmpConfig = async(streamId) =>{
+});
+app.post('/getuserprofile',async function ( req, res) {
   try{
-      let result= await axios.get(`${castrBaseUrl}/streams/${streamId}/ingest`, {headers});
-      console.log("getStreamRtmpConfig",result)
-      return result
-
-  } catch (error) {
-     console.log("errors",error);
-  }     
-  
-} 
-const streamId='60a6548be3414ce54aa8a67a';
-//getStreamRtmpConfig(streamId)
-
-getAllStreams = async() => {
-  try{
-      let result= await axios.get(`${castrBaseUrl}/streams`,{headers});
-      console.log("get all stream",result)
-     return result;
-
-  } catch (error) {
-     console.log("errors",error);
-  }  
-}
-//getAllStreams()
-
- deleteStreamById = async(deleteStreamId) => {
-  try{
-      await axios.delete(`${castrBaseUrl}/streams/${deleteStreamId}`,{headers});
-  } catch (error) {
-     console.log("errors",error);
-  }  
-}
-const deleteStreamId="60a6548be3414ce54aa8a67a";
-//deleteStreamById(deleteStreamId)
-
-getUserProfile = async() => {
-  try{
+    const headers={'x-api-key': req.body.apiKey}
       let result= await axios.get(`${castrBaseUrl}/user/profile`,{headers});
       console.log("User Profile",result)
-     return result;
-
+      res.send(result.data);
   } catch (error) {
      console.log("errors",error);
+     res.send(error) 
   }  
-}
-//getUserProfile();
-
-checkCasterApiKey = async(token) => {
+});
+app.post(`/getregionlist/:streamType`,async function ( req, res) {
   try{
-    const headers={'x-api-key': token}
-      let result= await axios.get(`${castrBaseUrl}/user/profile`,{headers});
-      console.log("API key",result)
-     return result;
+    const headers={'x-api-key': req.body.apiKey}
+    const streamTypes=req.params.streamType
+    let result= await axios.get(`${castrBaseUrl}/ingests/${streamTypes}`, {headers});
+    console.log("List of Regions",result.data)
+    res.send(result.data);
+
+} catch (error) {
+   console.log("errors",error);
+   res.send(error)
+}   
+});
+app.post(`/createnewstream`,async function ( req, res) {
+  try{
+    const payload={
+        "type": req.body.type ,
+        "name": req.body.name,
+        "region":req.body.region
+        }
+    const headers={'x-api-key': req.body.apiKey}
+    let result= await axios.post(`${castrBaseUrl}/streams/create`, payload, {headers});
+    console.log("New stream created",result.data)
+    res.send(result.data);
+} catch (error) {
+   console.log("errors",error);
+   res.send(error)
+}   
+});
+
+app.post(`/getstreamrtmpconfig/:id`,async function ( req, res) {
+  try{
+    const streamId=req.params.id;
+    const headers={'x-api-key': req.body.apiKey}
+      let result= await axios.get(`${castrBaseUrl}/streams/${streamId}/ingest`, {headers});
+      console.log("getStreamRtmpConfig",result)
+      res.send(result.data);
 
   } catch (error) {
      console.log("errors",error);
-  }  
-}
-const token='castrkey_91e6aa00-a7e3-11eb-bc86-0b87cf87c323';
-//checkCasterApiKey(token)
+     res.send(error)
+  }     
+  
+} );
 
+app.post(`/getallstreams`,async function ( req, res) {
+  try{
+    const headers={'x-api-key': req.body.apiKey}
+      let result= await axios.get(`${castrBaseUrl}/streams`,{headers});
+      res.send(result.data);
+      console.log("stream deletead",result.data)
+
+  } catch (error) {
+     console.log("errors",error);
+     res.send(error)
+  }  
+});
+
+app.post(`/deletestream/:id`,async function ( req, res) {
+  try{
+    const deleteStreamId=req.params.id;
+    const headers={'x-api-key': req.body.apiKey}
+    let result=await axios.delete(`${castrBaseUrl}/streams/${deleteStreamId}`,{headers});
+      res.send(result.data);
+  } catch (error) {
+     console.log("errors",error);
+     res.send(error)
+  }  
+});
 const PORT =  5000;
 
 app.listen(
